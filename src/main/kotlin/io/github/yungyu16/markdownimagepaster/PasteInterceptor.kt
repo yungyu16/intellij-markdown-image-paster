@@ -14,10 +14,13 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import io.github.yungyu16.markdownimagepaster.image.ImageFormatDetector
 import io.github.yungyu16.markdownimagepaster.image.ImageWriter
 import java.awt.datatransfer.Transferable
+import java.io.IOException
 import java.nio.file.Path
 
 class PasteHandlerRegistrar : StartupActivity {
@@ -32,8 +35,10 @@ class PasteHandlerRegistrar : StartupActivity {
     }
 
     private fun register(project: Project, mgr: EditorActionManager) {
-        val handlerToRegister = synchronized(lock) {
-            activeProjects.add(project)
+        val handlerToRegister: PasteImageActionHandler? = synchronized(lock) {
+            if (!activeProjects.add(project)) {
+                return
+            }
             val current = mgr.getActionHandler(IdeActions.ACTION_EDITOR_PASTE)
             if (current is PasteImageActionHandler) null else {
                 PasteImageActionHandler(current).also { installedHandler = it }
@@ -91,7 +96,8 @@ private class PasteImageActionHandler(
 
         val contents: Transferable? = try {
             CopyPasteManager.getInstance().contents
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Logger.getInstance(PasteImageActionHandler::class.java).debug("CopyPasteManager contents unavailable", e)
             null
         }
         val imageData = ImageFormatDetector.detect(contents)
@@ -107,16 +113,20 @@ private class PasteImageActionHandler(
         }
 
         val fileBaseName = file.nameWithoutExtension
-        val fileParentPath = file.parent?.let { parent ->
-            val projectRoot = Path.of(projectBasePath)
-            val parentPath = Path.of(parent.path)
-            projectRoot.relativize(parentPath).toString().replace('\\', '/') + "/"
-        } ?: ""
+        val parent = file.parent
+        val fileParentPath: String = if (parent == null) {
+            ""
+        } else {
+            try {
+                Path.of(projectBasePath).relativize(Path.of(parent.path)).toString().replace('\\', '/') + "/"
+            } catch (_: IllegalArgumentException) {
+                original.execute(editor, caret, dataContext)
+                return
+            }
+        }
 
-        val startOffset = editor.caretModel.offset
         val document = editor.document
-        val documentText = document.text
-        val targetDir = PasteSupport.resolveTargetDir(documentText, fileBaseName, fileParentPath)
+        val targetDir = PasteSupport.resolveTargetDir(document.text, fileBaseName, fileParentPath)
         if (targetDir == null) {
             original.execute(editor, caret, dataContext)
             return
@@ -125,27 +135,63 @@ private class PasteImageActionHandler(
         val pool = ApplicationManager.getApplication()
         pool.executeOnPooledThread {
             val absoluteTargetDir = Path.of(projectBasePath, targetDir)
-            val fileName = PasteSupport.imageFileName(imageData.sourceName)
+            val baseName = PasteSupport.imageFileName(imageData.sourceName)
 
-            val projectRelativePath = try {
-                ImageWriter.write(
+            val writeTarget = try {
+                ImageWriter.prepareWrite(
                     imageData.image,
                     imageData.format,
                     absoluteTargetDir,
-                    fileName,
                     Path.of(projectBasePath)
                 )
             } catch (e: Exception) {
-                Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to write pasted image", e)
+                Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to prepare pasted image", e)
                 return@executeOnPooledThread
             }
 
-            val markdownPath = PasteSupport.markdownImagePath(projectRelativePath)
-            val markdown = "![$fileName]($markdownPath)"
             pool.invokeLater {
                 WriteCommandAction.runWriteCommandAction(project) {
-                    val safeOffset = startOffset.coerceIn(0, document.textLength)
-                    document.insertString(safeOffset, markdown)
+                    val projectRoot = LocalFileSystem.getInstance().findFileByPath(projectBasePath)
+                    if (projectRoot == null) {
+                        Logger.getInstance(PasteImageActionHandler::class.java).warn("Project root not found in VFS")
+                        return@runWriteCommandAction
+                    }
+
+                    val dirVFile = try {
+                        VfsUtil.createDirectoryIfMissing(projectRoot, targetDir)
+                    } catch (e: IOException) {
+                        Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to create directory for pasted image", e)
+                        return@runWriteCommandAction
+                    } ?: run {
+                        Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to create directory for pasted image")
+                        return@runWriteCommandAction
+                    }
+
+                    val ext = imageData.format
+                    val resolvedName = resolveName(dirVFile, baseName, ext)
+                    val imageFileName = "$resolvedName.$ext"
+                    val child = try {
+                        dirVFile.createChildData(project, imageFileName)
+                    } catch (e: IOException) {
+                        Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to create VFS file for pasted image", e)
+                        return@runWriteCommandAction
+                    }
+                    child.setBinaryContent(writeTarget.bytes)
+
+                    val projectRelativePath = targetDir + imageFileName
+                    val markdownPath = PasteSupport.markdownImagePath(projectRelativePath)
+                    val displayName = imageFileName.substringBeforeLast('.')
+                    val markdown = "![$displayName]($markdownPath)"
+
+                    val currentOffset = editor.caretModel.offset
+                    val safeOffset = currentOffset.coerceIn(0, document.textLength)
+                    if (safeOffset != currentOffset) return@runWriteCommandAction
+                    try {
+                        document.insertString(safeOffset, markdown)
+                    } catch (e: Exception) {
+                        Logger.getInstance(PasteImageActionHandler::class.java).warn("Failed to insert markdown for pasted image", e)
+                        return@runWriteCommandAction
+                    }
                     if (editor.caretModel.offset == safeOffset) {
                         editor.caretModel.moveToOffset((safeOffset + markdown.length).coerceAtMost(document.textLength))
                     }
@@ -157,7 +203,20 @@ private class PasteImageActionHandler(
     private fun isMarkdown(file: VirtualFile): Boolean =
         file.extension?.lowercase() in MARKDOWN_EXTENSIONS
 
+    private fun resolveName(dir: VirtualFile, baseName: String, ext: String): String {
+        if (dir.findChild("$baseName.$ext") == null) return baseName
+        var counter = 2
+        while (counter <= MAX_COLLISION_COUNTER) {
+            if (dir.findChild("$baseName-$counter.$ext") == null) {
+                return "$baseName-$counter"
+            }
+            counter++
+        }
+        throw IOException("Could not find a non-conflicting filename for '$baseName' after $MAX_COLLISION_COUNTER attempts")
+    }
+
     companion object {
         private val MARKDOWN_EXTENSIONS = setOf("md", "markdown", "mdown", "mkd")
+        private const val MAX_COLLISION_COUNTER = 10_000
     }
 }

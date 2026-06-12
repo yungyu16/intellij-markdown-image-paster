@@ -2,7 +2,6 @@ package io.github.yungyu16.markdownimagepaster.path
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 class PathResolverTest {
@@ -46,9 +45,14 @@ class PathResolverTest {
     fun `front matter path cannot escape project root`() {
         val front = FrontMatter(typoraRootUrl = null, mediaSubpath = "../../outside/")
 
-        assertThrows(IllegalArgumentException::class.java) {
-            PathResolver.resolve(front, "post", "_posts/")
-        }
+        assertNull(PathResolver.resolve(front, "post", "_posts/"))
+    }
+
+    @Test
+    fun `front matter path with embedded traversal cannot escape project root`() {
+        val front = FrontMatter(typoraRootUrl = null, mediaSubpath = "foo/../../outside/")
+
+        assertNull(PathResolver.resolve(front, "post", ""))
     }
 
     @Test

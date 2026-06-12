@@ -2,6 +2,7 @@
 kotlin = "2.1.20"
 intellijPlatform = "2.5.0"
 junit5 = "5.10.0"
+snakeyaml = "2.3"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -12,3 +13,4 @@ junit5-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "ju
 junit5-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
 junit5-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
 junit5-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }

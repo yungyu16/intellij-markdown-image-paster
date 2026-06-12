@@ -80,4 +80,12 @@ class FrontMatterTest {
         """.trimIndent()
         assertNull(FrontMatterParser.parse(text))
     }
+
+    @Test
+    fun `parse handles leading UTF-8 BOM`() {
+        val text = "﻿---\ntypora-root-url: /assets\n---\n# Body"
+        val fm = FrontMatterParser.parse(text)
+        assertNotNull(fm)
+        assertEquals("/assets", fm!!.typoraRootUrl)
+    }
 }

@@ -15,7 +15,7 @@ object PathResolver {
         fileParentPath: String
     ): String? {
         frontMatter?.typoraRootUrl?.let { rootUrl ->
-            val base = resolveFrontMatterPath(rootUrl, fileParentPath)
+            val base = resolveFrontMatterPath(rootUrl, fileParentPath) ?: return null
             return appendSegment(base, "img/$fileBaseName")
         }
 
@@ -26,7 +26,7 @@ object PathResolver {
         return null
     }
 
-    private fun resolveFrontMatterPath(value: String, fileParentPath: String): String {
+    private fun resolveFrontMatterPath(value: String, fileParentPath: String): String? {
         val trimmed = value.trim()
         val base = if (trimmed.startsWith("/")) "" else fileParentPath
         val rawPath = trimmed.trim('/')
@@ -36,9 +36,7 @@ object PathResolver {
             else -> Path.of(base).resolve(rawPath)
         }.normalize()
 
-        require(!path.isAbsolute && !startsWithParentTraversal(path)) {
-            "Front matter path escapes project root: $value"
-        }
+        if (path.isAbsolute || containsParentTraversal(path)) return null
 
         return path.toString().replace('\\', '/').trim('/').let {
             if (it.isEmpty()) "" else "$it/"
@@ -46,8 +44,8 @@ object PathResolver {
     }
 
     private fun appendSegment(base: String, segment: String): String =
-        "${base.trimEnd('/')}/$segment/".trimStart('/')
+        "${base.trimEnd('/')}/${segment.trim('/')}/".trimStart('/')
 
-    private fun startsWithParentTraversal(path: Path): Boolean =
-        path.firstOrNull()?.toString() == ".."
+    private fun containsParentTraversal(path: Path): Boolean =
+        path.any { it.toString() == ".." }
 }

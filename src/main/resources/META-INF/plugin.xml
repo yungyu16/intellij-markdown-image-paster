@@ -3,6 +3,8 @@
     <name>Markdown Image Paster</name>
     <vendor url="https://github.com/yungyu16">yungyu16</vendor>
 
+    <icon>META-INF/pluginIcon.svg</icon>
+
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">

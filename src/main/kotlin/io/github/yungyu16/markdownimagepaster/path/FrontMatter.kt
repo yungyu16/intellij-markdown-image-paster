@@ -10,7 +10,8 @@ object FrontMatterParser {
     private const val FRONT_MATTER_START = "---"
 
     fun parse(text: String): FrontMatter? {
-        val lines = text.lineSequence().toList()
+        val normalized = if (text.startsWith("\uFEFF")) text.substring(1) else text
+        val lines = normalized.lineSequence().toList()
         if (lines.isEmpty() || lines[0].trim() != FRONT_MATTER_START) return null
 
         val endIndex = lines.withIndex()
@@ -20,7 +21,6 @@ object FrontMatterParser {
 
         val yamlBlock = lines.subList(1, endIndex).joinToString("\n")
         val data: Map<String, Any> = try {
-            @Suppress("UNCHECKED_CAST")
             org.yaml.snakeyaml.Yaml().load(yamlBlock) as? Map<String, Any> ?: return null
         } catch (_: Exception) {
             return null

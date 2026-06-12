@@ -64,9 +64,11 @@ object ImageFormatDetector {
         val files = try {
             @Suppress("UNCHECKED_CAST")
             transferable.getTransferData(DataFlavor.javaFileListFlavor) as? List<File>
-        } catch (_: UnsupportedFlavorException) {
+        } catch (e: UnsupportedFlavorException) {
+            log.debug("Clipboard file list flavor not available", e)
             null
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            log.debug("Failed to read clipboard file list", e)
             null
         }
 

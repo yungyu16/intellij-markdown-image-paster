@@ -3,8 +3,6 @@ package io.github.yungyu16.markdownimagepaster
 import io.github.yungyu16.markdownimagepaster.image.ImageWriter
 import io.github.yungyu16.markdownimagepaster.path.FrontMatterParser
 import io.github.yungyu16.markdownimagepaster.path.PathResolver
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.time.Clock
 import java.time.format.DateTimeFormatter
 
@@ -32,12 +30,5 @@ internal object PasteSupport {
     }
 
     fun markdownImagePath(projectRelativePath: String): String =
-        "/" + projectRelativePath
-            .trim('/')
-            .split('/')
-            .joinToString("/") { encodePathSegment(it) }
-
-    private fun encodePathSegment(segment: String): String =
-        URLEncoder.encode(segment, StandardCharsets.UTF_8)
-            .replace("+", "%20")
+        "/" + projectRelativePath.trim('/')
 }

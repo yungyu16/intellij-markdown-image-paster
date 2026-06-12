@@ -12,6 +12,25 @@ import javax.imageio.ImageIO
 class ImageWriterTest {
 
     @Test
+    fun `prepareWrite returns bytes without writing to disk`(@TempDir tmp: Path) {
+        val img = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
+        val targetDir = tmp.resolve("img/foo")
+        val result = ImageWriter.prepareWrite(img, "png", targetDir, tmp)
+        assertTrue(result.bytes.isNotEmpty())
+        assertTrue(!targetDir.toFile().exists())
+    }
+
+    @Test
+    fun `prepareWrite rejects target directory outside project root`(@TempDir tmp: Path) {
+        val img = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
+        val outside = tmp.parent.resolve("outside-${tmp.fileName}")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            ImageWriter.prepareWrite(img, "png", outside, tmp)
+        }
+    }
+
+    @Test
     fun `write creates a file and returns project-relative path`(@TempDir tmp: Path) {
         val img = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
         val projectRoot = tmp
@@ -68,5 +87,26 @@ class ImageWriterTest {
         }
 
         assertTrue(!outside.resolve("image.png").toFile().exists())
+    }
+
+    @Test
+    fun `sanitize replaces dot and dotdot with image`() {
+        assertEquals("image", ImageWriter.sanitize("."))
+        assertEquals("image", ImageWriter.sanitize(".."))
+    }
+
+    @Test
+    fun `sanitize prefixes windows reserved names with underscore`() {
+        assertEquals("_CON", ImageWriter.sanitize("CON"))
+        assertEquals("_con", ImageWriter.sanitize("con"))
+        assertEquals("_NUL", ImageWriter.sanitize("NUL"))
+        assertEquals("_COM1", ImageWriter.sanitize("COM1"))
+        assertEquals("_LPT9", ImageWriter.sanitize("LPT9"))
+    }
+
+    @Test
+    fun `sanitize leaves non reserved names untouched`() {
+        assertEquals("console", ImageWriter.sanitize("console"))
+        assertEquals("COM10", ImageWriter.sanitize("COM10"))
     }
 }

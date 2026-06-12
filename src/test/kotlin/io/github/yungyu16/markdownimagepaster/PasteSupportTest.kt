@@ -77,13 +77,13 @@ class PasteSupportTest {
     }
 
     @Test
-    fun `markdown image path is project absolute and url encoded`() {
+    fun `markdown image path is project absolute without url encoding`() {
         val result = PasteSupport.markdownImagePath(
             "img/2026-06-04-Claude Code 权限模式：四种模式怎么选/cover image-20260612123456.png"
         )
 
         assertEquals(
-            "/img/2026-06-04-Claude%20Code%20%E6%9D%83%E9%99%90%E6%A8%A1%E5%BC%8F%EF%BC%9A%E5%9B%9B%E7%A7%8D%E6%A8%A1%E5%BC%8F%E6%80%8E%E4%B9%88%E9%80%89/cover%20image-20260612123456.png",
+            "/img/2026-06-04-Claude Code 权限模式：四种模式怎么选/cover image-20260612123456.png",
             result
         )
     }

@@ -19,6 +19,8 @@ dependencies {
         intellijIdeaCommunity("2024.2")
     }
 
+    implementation(libs.snakeyaml)
+
     testImplementation(libs.junit5.jupiter)
     testRuntimeOnly(libs.junit5.jupiter.engine)
 }

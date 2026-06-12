@@ -6,9 +6,6 @@
 
 在 Markdown 文件中粘贴图片时，根据 front matter 规则自动保存到正确目录。
 
-- GitHub: <https://github.com/yungyu16/intellij-markdown-image-paster>
-- JetBrains Marketplace: <https://plugins.jetbrains.com/plugin/32253-markdown-image-paster>
-
 ## 背景
 
 Jekyll / Hexo 等静态博客的文章文件和图片目录有严格的路径对应关系。例如：

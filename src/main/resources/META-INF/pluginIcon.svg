@@ -1,9 +1,7 @@
-<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-    <title>Markdown Image Paster</title>
-    <rect x="3" y="3" width="34" height="34" rx="8" fill="#17212E"/>
-    <path d="M11 7h13l5 5v21H11z" fill="#F8FAFC"/>
-    <path d="M24 7v5h5" fill="#D8E2EA"/>
-    <path d="M14 13h3.2l2.8 5.3 2.8-5.3H26v10h-3.1v-4.7L20 23.4l-2.9-5.1V23H14z" fill="#1F2A37"/>
-    <path d="M14 29l4-4 2.8 2.7 2.4-3.6L28 29z" fill="#38A3FF"/>
-    <path d="M14 29h14v2H14z" fill="#8FD36A"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <rect x="4" y="4" width="32" height="32" rx="4" fill="#40B0C0"/>
+  <path d="M11 11h12l6 6v12H11z" fill="#FFFFFF"/>
+  <path d="M23 11v6h6" fill="#DBEFF1"/>
+  <path d="M14 18h3l2 4 2-4h3v8h-2.4v-3.6L18 26l-1.6-3.6V26H14z" fill="#1F7A8C"/>
+  <path d="M14 28l3-3 2 2 2-2.5 5 3.5z" fill="#F7A41D"/>
 </svg>

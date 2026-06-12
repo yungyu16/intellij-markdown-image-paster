@@ -59,6 +59,14 @@ class ImageFormatTest {
         assertNull(ImageFormatDetector.detect(null))
     }
 
+    @Test
+    fun `detect returns null source name when transferable has no file list flavor`() {
+        val img = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
+        val result = ImageFormatDetector.detect(BufferedImageTransferable(img))
+        assertNotNull(result)
+        assertNull(result!!.sourceName)
+    }
+
     private fun Transferable.wrapWith(value: Any): Transferable = object : Transferable {
         override fun getTransferData(flavor: DataFlavor): Any {
             if (!isDataFlavorSupported(flavor)) throw UnsupportedFlavorException(flavor)
