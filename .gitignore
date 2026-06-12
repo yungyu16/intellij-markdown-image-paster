@@ -1,0 +1,79 @@
+# ============================================================
+# IntelliJ IDEA / JetBrains
+# ============================================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# IntelliJ Platform Gradle Plugin 缓存（插件开发专用）
+.intellijPlatform/
+
+# ============================================================
+# Gradle
+# ============================================================
+.gradle/
+**/build/
+!src/**/build/
+gradle-app.setting
+.gradletasknamecache
+
+# 保留 wrapper 必要文件（*.jar 通用规则不影响 wrapper）
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradlew
+!gradlew.bat
+
+# ============================================================
+# Java / Kotlin
+# ============================================================
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+hs_err_pid*
+replay_pid*
+
+# ============================================================
+# Kotlin
+# ============================================================
+.kotlin/
+
+# ============================================================
+# JVM / JDK
+# ============================================================
+*.hprof
+*.dump
+.attach_pid*
+
+# ============================================================
+# Package / Archive（构建产物由 build/ 规则覆盖）
+# ============================================================
+*.war
+*.nar
+*.ear
+*.tar.gz
+*.rar
+
+# ============================================================
+# Maven
+# ============================================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ============================================================
+# Eclipse
+# ============================================================
+.project
+.classpath
+cmake-build-*/

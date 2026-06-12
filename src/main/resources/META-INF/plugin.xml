@@ -1,0 +1,12 @@
+<idea-plugin>
+    <id>io.github.yungyu16.markdown-image-paster</id>
+    <name>Markdown Image Paster</name>
+    <vendor url="https://github.com/yungyu16">yungyu16</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="io.github.yungyu16.markdownimagepaster.PasteHandlerRegistrar"/>
+    </extensions>
+</idea-plugin>
